@@ -5,6 +5,11 @@ import matplotlib.dates as dat
 import matplotlib.pyplot as plt
 import datetime as dt
 
+'''
+Initialization of a dictionary that is referenced in scanPage() to convert 
+month strings to their integer representations
+'''
+
 monthDict = dict()
 monthDict['Jan']=1
 monthDict['Feb']=2
@@ -18,6 +23,11 @@ monthDict['Sep']=9
 monthDict['Oct']=10
 monthDict['Nov']=11
 monthDict['Dec']=12
+
+'''
+Initialization of bigDic, which is the variable that plotItem() uses to 
+find a title for each graph when it is being plotted.
+'''
 
 bigDic = dict()
 dryDic = dict()
@@ -41,17 +51,22 @@ seisDic[1]="Seismic Singularity"
 noxDic[0]="Noxious Scythe"
 noxDic[1]="Noxious Staff"
 noxDic[2]="Noxious Longbow"
-# pages = 1
-## Here, enter the most recent forum page. If you want to read a whole thread,
-## iterate through the pages of the thread and store price data.
 
-# url = "http://secure.runescape.com/m=forum/forums.ws?17,18,853,65786728,goto,"+str(pages)
-# file = urllib.request.urlopen(target_url)
+'''
+gather(url : str, pages : int) = (lst, dateTimeLst), where 
+    the strings written as "int/.../int" from the provided url are 
+       iterating through each page such that 0 <= page <= pages
+       
+NOTES:
+takes the forum page URL as a parameter. If you want to read a whole thread,
+    enter the most recent page (max page) as the pages parameter.
 
-#   gather(url : str,pages : int,file : str): writes the strings written as
-#       "int/.../int" into the given file from all of the pages in pages,
-#       using the url provided as input
-
+url should be the forum URL prefix WITHOUT the page suffix. That is, url should be
+    something like
+    "http://secure.runescape.com/m=forum/forums.ws?17,18,853,65786728,goto,"
+    rather than 
+    "http://secure.runescape.com/m=forum/forums.ws?17,18,853,65786728,goto,21"
+'''
 def gather(url, pages):
     lst = [[[],[],[],[],[],[]],[[],[]],[[],[]],[[],[],[]]]
     dateTimeLst = []
@@ -67,7 +82,6 @@ scanPage(url) = (priceLst, timeLst), where priceLst consists of nested lists con
     the price updates from the given url, and
     timeLst consists of the date and time of the prices in priceLst
 '''
-
 def scanPage(url):
     file = urllib.request.urlopen(url)
     django.http.HttpResponse.flush(file)
@@ -97,19 +111,21 @@ def scanPage(url):
             minute = int(time[15:17])
             date = dat.date2num(dt.datetime(year,month,day,hour,minute))
             timeLst.append(date)
-        #Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
     file.close()
     return (priceLst, timeLst)
 
 
     
-""" sortLines(lst1, lst2) = lst', where lst' is a list of lists containing prices for each item.
-    lst'[0][x]: = drygores, where x represents different drygores.
-    lst'[1][x]: = ascension x=0=mh;x=1=oh
-    lst'[2][x]: = seismic x=0=mh;x=1=oh
-    lst'[3][x]: = noxious
+""" 
+sortLines(lst1, lst2) = lst', where lst' is a list of lists containing prices for each item.
 
     lst' contains 4 lists, one for lists of drygore prices, one for lists of asc, etc.
+    In each case, differing x values represent different items within the category.
+    
+    lst'[0][x]: = drygores
+    lst'[1][x]: = ascension 
+    lst'[2][x]: = seismic 
+    lst'[3][x]: = noxious
 """
 def sortLines(lst1,lst2):
     for item in lst1:
@@ -128,22 +144,11 @@ def sortLines(lst1,lst2):
             lst2[3][2].append(float(m[2]))
     return lst2
 
-''' plotItem(num1 : int, num2 : int, lst : Lines list) plots the prices for an item on a graph
-
-    key:
-    0,0 - dry mh long
-    0,1 - dry mh mace
-    0,2 - dry mh rapier
-    0,3 - dry oh long
-    0,4 - dry oh mace
-    0,5 - dry oh rapier
-    1,0 - mh asc
-    1,1 - oh asc
-    2,0 - mh seis
-    2,1 - oh seis
-    3,0 - nox scythe
-    3,1 - nox staff
-    3,2 - nox longbow
+''' 
+plotItem(num1 : int, num2 : int, priceLst : int list, timeLst : int list) = None 
+    plots the time, price values provided in priceLst and timeLst on a graph
+    and saves this graph to an image with the filename provided in bigDic
+   
 '''
 def plotItem(num1, num2, priceLst, timeLst):
     plt.figure(figsize=(25,5))
@@ -157,8 +162,11 @@ def plotItem(num1, num2, priceLst, timeLst):
     plt.savefig(bigDic[num1][num2])
     plt.close()
 
-''' saves all of the graphs for seismics, ascensions, and noxious items
-    with the filename of the item itself. (NO DRYGORES ATM)
+''' 
+makeGraphs(baseUrl : str, pages : int) = None
+    This function returns None, and performs the action of saving
+    all of the graphs for each of the specified items (drygore, ascension, noxious)
+    with the file name being the name of the item itself.
 '''
 def makeGraphs(baseUrl, pages):
     (priceLst,timeLst) = gather(baseUrl,pages)
